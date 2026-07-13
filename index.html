@@ -307,8 +307,78 @@
       line-height: 1.7;
     }
 
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .calc-box {
+      background: #f8fbff;
+      border: 1px solid #dce8f5;
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .calc-box h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      letter-spacing: -0.02em;
+    }
+
+    .calc-box ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .formula {
+      margin-top: 14px;
+      background: #0f172a;
+      color: #eff6ff;
+      border-radius: 18px;
+      padding: 16px 18px;
+      font-size: 14px;
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+
+    .table-wrap {
+      margin-top: 16px;
+      overflow-x: auto;
+      border-radius: 18px;
+      border: 1px solid #e6edf5;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th, td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid #edf2f7;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f8fbff;
+      color: #42556e;
+      font-weight: 700;
+    }
+
+    td strong {
+      color: var(--text);
+    }
+
     @media (max-width: 960px) {
       .card, .panel, .panel.aside { grid-column: 1 / -1; }
+      .calc-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -377,6 +447,80 @@
           <div class="note"><span class="dot" style="background: var(--teal)"></span><div><strong>38.48 兆韓元</strong> 是 2026/6/19 被英文媒體廣泛引用的融資餘額高點。</div></div>
           <div class="note"><span class="dot" style="background: var(--amber)"></span><div><strong>0.80%</strong> 是另一種風險視角：以市值比重看槓桿熱度。</div></div>
         </div>
+      </div>
+
+      <div class="panel">
+        <div class="toolbar">
+          <div>
+            <h2>依韓國維持率算法推估</h2>
+            <p>先照韓國常見公式計，再加上「新開融資最低保證金率 40%」這個標準化假設，回推出一個可觀察的市場級估算值。</p>
+          </div>
+        </div>
+
+        <div class="formula">
+          담보유지비율 =（現金 + 持股市值）÷ 融資金額 × 100%<br />
+          若先忽略帳戶現金：最低擔保市值 = 融資金額 × 140%<br />
+          若用最低保證金率 40% 假設：初始持股市值 ≈ 融資金額 ÷ 0.6
+        </div>
+
+        <div class="calc-grid">
+          <div class="calc-box">
+            <h3>為什麼這裡是「估算」</h3>
+            <ul>
+              <li>韓國維持率是帳戶概念，不是單看全市場融資餘額就能精準反推。</li>
+              <li>市場級真實值還缺：融資戶帳上現金、擔保品組成、個股折算率。</li>
+              <li>所以這裡給你的是<strong>制度門檻</strong>與<strong>標準化假設下的推估水位</strong>。</li>
+            </ul>
+          </div>
+          <div class="calc-box">
+            <h3>這版採用的假設</h3>
+            <ul>
+              <li>維持率門檻：<strong>140%</strong></li>
+              <li>新開融資最低保證金率：<strong>40%</strong></li>
+              <li>代表：40 自有資金 + 60 融資買股</li>
+              <li>因此初始推估維持率約：<strong>166.67%</strong></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>區間</th>
+                <th>融資餘額</th>
+                <th>140% 最低擔保市值</th>
+                <th>40% 保證金假設下初始持股市值</th>
+                <th>推估維持率</th>
+                <th>距離 140% 緩衝</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>全市場</strong></td>
+                <td>38.4786 兆韓元</td>
+                <td>53.8700 兆韓元</td>
+                <td>64.1310 兆韓元</td>
+                <td>166.67%</td>
+                <td>約 16.0% 下跌空間</td>
+              </tr>
+              <tr>
+                <td><strong>KOSPI 市場</strong></td>
+                <td>29.3977 兆韓元</td>
+                <td>41.1568 兆韓元</td>
+                <td>48.9962 兆韓元</td>
+                <td>166.67%</td>
+                <td>約 16.0% 下跌空間</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel aside">
+        <h2>維持率推估圖</h2>
+        <p>把「融資金額」、「140% 追繳線」、「40% 保證金假設下的初始市值」放在同一圖，會更直觀看出緩衝有多薄。</p>
+        <canvas id="maintenanceChart" height="220"></canvas>
       </div>
 
       <div class="panel">
@@ -643,6 +787,72 @@
           panel.classList.toggle('hidden', panel.dataset.panel !== lang);
         });
       });
+    });
+
+    const maintenanceCtx = document.getElementById('maintenanceChart');
+    new Chart(maintenanceCtx, {
+      type: 'bar',
+      data: {
+        labels: ['全市場', 'KOSPI 市場'],
+        datasets: [
+          {
+            label: '融資餘額',
+            data: [38.4786, 29.3977],
+            backgroundColor: 'rgba(37,99,235,0.88)',
+            borderRadius: 10
+          },
+          {
+            label: '140% 最低擔保市值',
+            data: [53.87, 41.1568],
+            backgroundColor: 'rgba(217,119,6,0.88)',
+            borderRadius: 10
+          },
+          {
+            label: '40% 保證金假設下初始持股市值',
+            data: [64.131, 48.9962],
+            backgroundColor: 'rgba(15,118,110,0.88)',
+            borderRadius: 10
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              usePointStyle: true,
+              boxWidth: 8,
+              font: { size: 12, weight: '700' }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label(ctx) {
+                return `${ctx.dataset.label}: ${ctx.raw.toFixed(4)} 兆韓元`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { font: { size: 12, weight: '700' } }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: (value) => value + ' 兆'
+            },
+            title: {
+              display: true,
+              text: '兆韓元',
+              font: { size: 12, weight: '700' }
+            }
+          }
+        }
+      }
     });
   </script>
 </body>
