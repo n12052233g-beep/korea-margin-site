@@ -353,6 +353,41 @@
       border: 1px solid #e6edf5;
     }
 
+    .metric-stack {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .metric-item {
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid #e3edf7;
+      background: #f8fbff;
+    }
+
+    .metric-item .k {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+
+    .metric-item .v {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 6px;
+    }
+
+    .metric-item .d {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -521,6 +556,38 @@
         <h2>維持率推估圖</h2>
         <p>把「融資金額」、「140% 追繳線」、「40% 保證金假設下的初始市值」放在同一圖，會更直觀看出緩衝有多薄。</p>
         <canvas id="maintenanceChart" height="220"></canvas>
+      </div>
+
+      <div class="panel">
+        <div class="toolbar">
+          <div>
+            <h2>韓國大盤 vs 模型化融資維持率</h2>
+            <p>這張圖把 KOSPI 跟「模型化維持率」放一起。算法是假設融資帳戶以 <strong>40% 保證金開倉</strong>，起始維持率 166.67%，後續擔保品市值隨 KOSPI 同步變動。</p>
+          </div>
+        </div>
+        <canvas id="ratioKospiChart" height="130"></canvas>
+      </div>
+
+      <div class="panel aside">
+        <h2>最新維持率（模型值）</h2>
+        <p>旁邊這個數字是給你快速判讀用的。目前仍是<strong>模型估算</strong>，不是 KOFIA 直接公布的真實全市場整戶維持率。</p>
+        <div class="metric-stack">
+          <div class="metric-item">
+            <div class="k">Latest modeled maintenance ratio</div>
+            <div class="v">136.69%</div>
+            <div class="d">用 2026/07/10 KOSPI 7,476，相對 2026/06/19 的 9,114.55 推估。已低於 140% 警戒線，代表若融資部位完全跟大盤同步且無補保，風險已進入警戒。</div>
+          </div>
+          <div class="metric-item">
+            <div class="k">Latest margin balance cited</div>
+            <div class="v">37.7187 兆</div>
+            <div class="d">韓媒引用 금융투자협회：截至 2026/07/02 的 신용거래융자 잔고。</div>
+          </div>
+          <div class="metric-item">
+            <div class="k">Model rule</div>
+            <div class="v">140% / 40%</div>
+            <div class="d">140% 為最低 담보비율；40% 為最低 보증금율，因此起始模型維持率為 166.67%。</div>
+          </div>
+        </div>
       </div>
 
       <div class="panel">
@@ -874,6 +941,115 @@
             title: {
               display: true,
               text: '兆韓元',
+              font: { size: 12, weight: '700' }
+            }
+          }
+        }
+      }
+    });
+
+    const ratioBase = 166.67;
+    const kospiBase = 9114.55;
+    const ratioKospiData = snapshotData.map((point) => {
+      if (!point.kospi) return null;
+      return Number((ratioBase * (point.kospi / kospiBase)).toFixed(2));
+    });
+
+    const ratioKospiCtx = document.getElementById('ratioKospiChart');
+    new Chart(ratioKospiCtx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'KOSPI 指數',
+            data: snapshotData.map((d) => d.kospi),
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37,99,235,0.14)',
+            pointBackgroundColor: '#2563eb',
+            pointRadius: 4,
+            borderWidth: 3,
+            tension: 0.28,
+            spanGaps: true,
+            yAxisID: 'yKospiCombined'
+          },
+          {
+            label: '模型化維持率 (%)',
+            data: ratioKospiData,
+            borderColor: '#dc2626',
+            backgroundColor: 'rgba(220,38,38,0.14)',
+            pointBackgroundColor: '#dc2626',
+            pointRadius: 4,
+            borderWidth: 3,
+            tension: 0.28,
+            spanGaps: true,
+            yAxisID: 'yRatio'
+          },
+          {
+            label: '140% 警戒線',
+            data: labels.map(() => 140),
+            borderColor: '#d97706',
+            borderDash: [6, 6],
+            pointRadius: 0,
+            borderWidth: 2,
+            yAxisID: 'yRatio'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            labels: {
+              usePointStyle: true,
+              font: { size: 12, weight: '700' }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label(ctx) {
+                if (ctx.dataset.yAxisID === 'yRatio') {
+                  return `${ctx.dataset.label}: ${ctx.raw}%`;
+                }
+                if (ctx.raw == null) return `${ctx.dataset.label}: n/a`;
+                return `${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString()}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#64748b', font: { size: 12, weight: '600' } },
+            grid: { color: 'rgba(216,225,235,0.5)' }
+          },
+          yKospiCombined: {
+            position: 'left',
+            ticks: {
+              color: '#2563eb',
+              callback: (value) => Number(value).toLocaleString()
+            },
+            title: {
+              display: true,
+              text: 'KOSPI',
+              color: '#2563eb',
+              font: { size: 12, weight: '700' }
+            }
+          },
+          yRatio: {
+            position: 'right',
+            min: 120,
+            max: 180,
+            grid: { drawOnChartArea: false },
+            ticks: {
+              color: '#dc2626',
+              callback: (value) => `${value}%`
+            },
+            title: {
+              display: true,
+              text: '模型化維持率',
+              color: '#dc2626',
               font: { size: 12, weight: '700' }
             }
           }
