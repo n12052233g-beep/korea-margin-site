@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>韓國融資餘額 vs KOSPI Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <style>
     :root {
       --bg: #f3f7fb;
@@ -388,6 +389,11 @@
       color: var(--muted);
     }
 
+    .plotly-chart {
+      width: 100%;
+      min-height: 420px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -428,8 +434,8 @@
       </p>
       <div class="meta-row">
         <div class="pill">維持率門檻：140%</div>
-        <div class="pill">最新常見 headline 水位：38.4786 兆韓元</div>
-        <div class="pill">同區間 KOSPI：9,114.55</div>
+        <div class="pill">最新韓文來源融資餘額：37.7187 兆韓元（2026/07/02）</div>
+        <div class="pill">最新維持率估算：140.82%</div>
       </div>
     </section>
 
@@ -441,13 +447,13 @@
       </div>
       <div class="card">
         <div class="label">Margin Balance</div>
-        <div class="value">38.48 兆</div>
-        <div class="sub">2026/6/19 公開引用的整體融資餘額（KRW，headline snapshot）。</div>
+        <div class="value">37.72 兆</div>
+        <div class="sub">2026/07/02 韓文來源引用 KOFIA 的最新整體融資餘額。</div>
       </div>
       <div class="card">
-        <div class="label">KOSPI-linked Balance</div>
-        <div class="value">29.40 兆</div>
-        <div class="sub">同篇英文報導提到的 KOSPI 市場融資餘額，首次突破 29 兆韓元。</div>
+        <div class="label">Estimated Ratio</div>
+        <div class="value">140.82%</div>
+        <div class="sub">以 2026/07/02 KOSPI 收盤 7,648.09，對比 6/19 高點基準推估，幾乎貼近警戒線。</div>
       </div>
       <div class="card">
         <div class="label">BOK Risk Ratio</div>
@@ -561,31 +567,31 @@
       <div class="panel">
         <div class="toolbar">
           <div>
-            <h2>韓國大盤 vs 模型化融資維持率</h2>
-            <p>這張圖把 KOSPI 跟「模型化維持率」放一起。算法是假設融資帳戶以 <strong>40% 保證金開倉</strong>，起始維持率 166.67%，後續擔保品市值隨 KOSPI 同步變動。</p>
+            <h2>韓國大盤 K 棒 vs 維持率折線</h2>
+            <p>這張圖改成你要的樣子：<strong>KOSPI 用 K 棒</strong>、<strong>維持率用折線</strong>。折線是拿韓文來源的實際融資餘額觀察點，搭配 40% / 140% 規則算出的<strong>市場級維持率估算線</strong>。</p>
           </div>
         </div>
-        <canvas id="ratioKospiChart" height="130"></canvas>
+        <div id="combinedActualChart" class="plotly-chart"></div>
       </div>
 
       <div class="panel aside">
-        <h2>最新維持率（模型值）</h2>
-        <p>旁邊這個數字是給你快速判讀用的。目前仍是<strong>模型估算</strong>，不是 KOFIA 直接公布的真實全市場整戶維持率。</p>
+        <h2>最新維持率（估算）</h2>
+        <p>這裡用<strong>最新有韓文來源融資餘額的日期（2026/07/02）</strong>來寫最新值。仍然不是 KOFIA 直接公布的整戶真實維持率，而是按韓國規則推的市場級估算。</p>
         <div class="metric-stack">
           <div class="metric-item">
-            <div class="k">Latest modeled maintenance ratio</div>
-            <div class="v">136.69%</div>
-            <div class="d">用 2026/07/10 KOSPI 7,476，相對 2026/06/19 的 9,114.55 推估。已低於 140% 警戒線，代表若融資部位完全跟大盤同步且無補保，風險已進入警戒。</div>
+            <div class="k">Latest estimated maintenance ratio</div>
+            <div class="v">140.82%</div>
+            <div class="d">以 2026/07/02 KOSPI 收盤 <strong>7,648.09</strong> 對比 2026/06/19 收盤 <strong>9,052.42</strong> 推得。幾乎貼著 140% 警戒線。</div>
           </div>
           <div class="metric-item">
-            <div class="k">Latest margin balance cited</div>
+            <div class="k">Latest actual margin balance</div>
             <div class="v">37.7187 兆</div>
-            <div class="d">韓媒引用 금융투자협회：截至 2026/07/02 的 신용거래융자 잔고。</div>
+            <div class="d">韓媒引用 금융투자협회：截至 <strong>2026/07/02</strong> 的 신용거래융자 잔고。</div>
           </div>
           <div class="metric-item">
-            <div class="k">Model rule</div>
-            <div class="v">140% / 40%</div>
-            <div class="d">140% 為最低 담보비율；40% 為最低 보증금율，因此起始模型維持率為 166.67%。</div>
+            <div class="k">Data note</div>
+            <div class="v">KOFIA + KS11</div>
+            <div class="d">融資餘額是韓文來源引用 KOFIA；K 棒 OHLC 為公開 KS11 日線。KRX 官方 API 端需登入 / AUTH_KEY，公開直抓受限。</div>
           </div>
         </div>
       </div>
@@ -702,46 +708,53 @@
   <script>
     const snapshotData = [
       {
-        date: '2025-12-31',
-        label: '2025 年底',
-        margin: 27.42,
-        kospi: null,
-        note: '英文媒體回推的年初附近基準水位，之後 2026 上半年快速拉升。'
+        date: '2025-11-07',
+        label: '2025-11-07',
+        margin: 26.2,
+        kospi: 3953.76,
+        note: 'FSC 官方文提到 2025/11/07 신용거래융자잔고 26.2 兆韓元，作為制度說明中的歷史高點。'
       },
       {
-        date: '2026-03-24',
-        label: '2026-03-24',
-        margin: 33.35,
-        kospi: null,
-        note: 'Seoul Economic Daily 提到 forced selling 升高時，margin loan balance 約 33.35 兆韓元。'
+        date: '2026-04-30',
+        label: '2026-04-30',
+        margin: 35.7,
+        kospi: 6598.87,
+        note: 'FETV 引用 금융투자협회：2026/04/30 신용거래융자 잔고 35.7 兆韓元。'
       },
       {
         date: '2026-05-15',
         label: '2026-05-15',
-        margin: 36.57,
+        margin: 36.5675,
         kospi: 7493.18,
-        note: '韓媒報導：KOSPI 急跌到 7,493.18，但融資餘額仍創高。'
+        note: 'MBC / KOFIA 引用：2026/05/15 잔고 36.5675 兆韓元；當天 KOSPI 收 7,493.18。'
       },
       {
         date: '2026-05-29',
         label: '2026-05-29',
-        margin: 38.02,
-        kospi: null,
-        note: '6/1 英文報導回顧：總融資餘額 38.0226 兆韓元，逼近 38 兆新高。'
+        margin: 38.0226,
+        kospi: 8476.15,
+        note: 'Seoul Economic Daily / KOFIA：2026/05/29 잔고 38.0226 兆韓元。'
       },
       {
         date: '2026-06-19',
         label: '2026-06-19',
-        margin: 38.48,
-        kospi: 9114.55,
-        note: '高點 snapshot：KOSPI 9,114.55；整體融資餘額 38.4786 兆韓元。'
+        margin: 38.4786,
+        kospi: 9052.42,
+        note: '파이낸셜뉴스 / KOFIA：2026/06/19 잔고 38.4786 兆韓元；KOSPI 收 9,052.42。'
       },
       {
-        date: '2026-07-10',
-        label: '2026-07-10',
-        margin: null,
-        kospi: 7476,
-        note: 'Trading Economics 顯示 7/10 KOSPI 約 7,476，提供近期回落參考。'
+        date: '2026-06-30',
+        label: '2026-06-30',
+        margin: 37.3228,
+        kospi: 8476.48,
+        note: 'e-focus 引用 금융투자협회：2026/06/30 잔고 37.3228 兆韓元。'
+      },
+      {
+        date: '2026-07-02',
+        label: '2026-07-02',
+        margin: 37.7187,
+        kospi: 7648.09,
+        note: '파이낸셜뉴스 引用 금융투자협회：2026/07/02 잔고 37.7187 兆韓元；這是目前頁面採用的最新韓文來源實際餘額。'
       }
     ];
 
@@ -949,113 +962,97 @@
     });
 
     const ratioBase = 166.67;
-    const kospiBase = 9114.55;
-    const ratioKospiData = snapshotData.map((point) => {
-      if (!point.kospi) return null;
-      return Number((ratioBase * (point.kospi / kospiBase)).toFixed(2));
-    });
+    const kospiBase = 9052.42;
+    const ratioKospiData = snapshotData.map((point) => Number((ratioBase * (point.kospi / kospiBase)).toFixed(2)));
 
-    const ratioKospiCtx = document.getElementById('ratioKospiChart');
-    new Chart(ratioKospiCtx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [
-          {
-            label: 'KOSPI 指數',
-            data: snapshotData.map((d) => d.kospi),
-            borderColor: '#2563eb',
-            backgroundColor: 'rgba(37,99,235,0.14)',
-            pointBackgroundColor: '#2563eb',
-            pointRadius: 4,
-            borderWidth: 3,
-            tension: 0.28,
-            spanGaps: true,
-            yAxisID: 'yKospiCombined'
-          },
-          {
-            label: '模型化維持率 (%)',
-            data: ratioKospiData,
-            borderColor: '#dc2626',
-            backgroundColor: 'rgba(220,38,38,0.14)',
-            pointBackgroundColor: '#dc2626',
-            pointRadius: 4,
-            borderWidth: 3,
-            tension: 0.28,
-            spanGaps: true,
-            yAxisID: 'yRatio'
-          },
-          {
-            label: '140% 警戒線',
-            data: labels.map(() => 140),
-            borderColor: '#d97706',
-            borderDash: [6, 6],
-            pointRadius: 0,
-            borderWidth: 2,
-            yAxisID: 'yRatio'
-          }
-        ]
+    const actualSeries = [
+      { x: '2025-11-07', open: 3963.72, high: 4037.61, low: 3887.32, close: 3953.76, margin: 26.2, ratio: ratioKospiData[0] },
+      { x: '2026-04-30', open: 6739.39, high: 6750.27, low: 6597.83, close: 6598.87, margin: 35.7, ratio: ratioKospiData[1] },
+      { x: '2026-05-15', open: 7951.75, high: 8046.78, low: 7371.68, close: 7493.18, margin: 36.5675, ratio: ratioKospiData[2] },
+      { x: '2026-05-29', open: 8384.31, high: 8476.15, low: 8273.74, close: 8476.15, margin: 38.0226, ratio: ratioKospiData[3] },
+      { x: '2026-06-19', open: 9288.89, high: 9385.59, low: 8831.72, close: 9052.42, margin: 38.4786, ratio: ratioKospiData[4] },
+      { x: '2026-06-30', open: 8416.70, high: 8667.73, low: 8220.80, close: 8476.48, margin: 37.3228, ratio: ratioKospiData[5] },
+      { x: '2026-07-02', open: 7933.10, high: 8136.28, low: 7616.33, close: 7648.09, margin: 37.7187, ratio: ratioKospiData[6] }
+    ];
+
+    const combinedActualChart = document.getElementById('combinedActualChart');
+    Plotly.newPlot(combinedActualChart, [
+      {
+        type: 'candlestick',
+        x: actualSeries.map(d => d.x),
+        open: actualSeries.map(d => d.open),
+        high: actualSeries.map(d => d.high),
+        low: actualSeries.map(d => d.low),
+        close: actualSeries.map(d => d.close),
+        name: 'KOSPI K棒',
+        yaxis: 'y',
+        increasing: { line: { color: '#2563eb' }, fillcolor: 'rgba(37,99,235,0.65)' },
+        decreasing: { line: { color: '#94a3b8' }, fillcolor: 'rgba(148,163,184,0.6)' },
+        hovertemplate: '日期 %{x}<br>Open %{open:.2f}<br>High %{high:.2f}<br>Low %{low:.2f}<br>Close %{close:.2f}<extra></extra>'
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          legend: {
-            labels: {
-              usePointStyle: true,
-              font: { size: 12, weight: '700' }
-            }
-          },
-          tooltip: {
-            callbacks: {
-              label(ctx) {
-                if (ctx.dataset.yAxisID === 'yRatio') {
-                  return `${ctx.dataset.label}: ${ctx.raw}%`;
-                }
-                if (ctx.raw == null) return `${ctx.dataset.label}: n/a`;
-                return `${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString()}`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            ticks: { color: '#64748b', font: { size: 12, weight: '600' } },
-            grid: { color: 'rgba(216,225,235,0.5)' }
-          },
-          yKospiCombined: {
-            position: 'left',
-            ticks: {
-              color: '#2563eb',
-              callback: (value) => Number(value).toLocaleString()
-            },
-            title: {
-              display: true,
-              text: 'KOSPI',
-              color: '#2563eb',
-              font: { size: 12, weight: '700' }
-            }
-          },
-          yRatio: {
-            position: 'right',
-            min: 120,
-            max: 180,
-            grid: { drawOnChartArea: false },
-            ticks: {
-              color: '#dc2626',
-              callback: (value) => `${value}%`
-            },
-            title: {
-              display: true,
-              text: '模型化維持率',
-              color: '#dc2626',
-              font: { size: 12, weight: '700' }
-            }
-          }
-        }
+      {
+        type: 'scatter',
+        mode: 'lines+markers',
+        x: actualSeries.map(d => d.x),
+        y: actualSeries.map(d => d.ratio),
+        name: '維持率估算 (%)',
+        yaxis: 'y2',
+        line: { color: '#dc2626', width: 3 },
+        marker: { color: '#dc2626', size: 8 },
+        hovertemplate: '日期 %{x}<br>維持率估算 %{y:.2f}%<extra></extra>'
+      },
+      {
+        type: 'scatter',
+        mode: 'lines',
+        x: actualSeries.map(d => d.x),
+        y: actualSeries.map(() => 140),
+        name: '140% 警戒線',
+        yaxis: 'y2',
+        line: { color: '#d97706', width: 2, dash: 'dash' },
+        hovertemplate: '140% 警戒線<extra></extra>'
       }
-    });
+    ], {
+      margin: { l: 56, r: 64, t: 10, b: 48 },
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: '#ffffff',
+      legend: { orientation: 'h', x: 0, y: 1.14 },
+      xaxis: {
+        type: 'category',
+        tickfont: { color: '#64748b' },
+        showgrid: true,
+        gridcolor: 'rgba(216,225,235,0.45)'
+      },
+      yaxis: {
+        title: 'KOSPI',
+        tickfont: { color: '#2563eb' },
+        titlefont: { color: '#2563eb' },
+        showgrid: true,
+        gridcolor: 'rgba(216,225,235,0.45)'
+      },
+      yaxis2: {
+        title: '維持率估算 (%)',
+        tickfont: { color: '#dc2626' },
+        titlefont: { color: '#dc2626' },
+        overlaying: 'y',
+        side: 'right',
+        range: [70, 180]
+      },
+      annotations: [
+        {
+          x: '2026-07-02',
+          y: 140.82,
+          yref: 'y2',
+          text: '最新 140.82%',
+          showarrow: true,
+          arrowhead: 3,
+          ax: 40,
+          ay: -36,
+          bgcolor: '#fff1f2',
+          bordercolor: '#fecdd3',
+          font: { color: '#9f1239', size: 12 }
+        }
+      ]
+    }, { responsive: true, displayModeBar: false });
   </script>
 </body>
 </html>
